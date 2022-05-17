@@ -7,7 +7,7 @@ y = pd.read_csv('Data/air_visit_data.csv.zip')
 y = y.pivot(index='visit_date', columns='air_store_id')['visitors']
 y = y.fillna(0)
 y = pd.DataFrame(y.sum(axis=1))
-print(y)
+# print(y)
 
 y = y.reset_index(drop=False)
 y.columns = ['ds', 'y']
@@ -25,12 +25,11 @@ holidays.columns = ['ds', 'holiday']
 
 X_reservations = pd.read_csv('Data/air_reserve.csv.zip')
 X_reservations['visit_date'] = pd.to_datetime(X_reservations['visit_datetime']).dt.date
-X_reservations = pd.DataFrame(X_reservations.groupby('visit_date')
-                              ['reserve_visitors'].sum())
+X_reservations = pd.DataFrame(X_reservations.groupby('visit_date')['reserve_visitors'].sum())
 X_reservations = X_reservations.reset_index(drop=False)
-train = train4.copy()
-train['ds'] = pd.to_datetime(train['ds']).dt.date
-train = train.merge(X_reservations, left_on='ds', right_on='visit_date', how='left')[['ds', 'y', 'reserve_visitors']].fillna(0)
+train4 = train4.copy()
+train4['ds'] = pd.to_datetime(train4['ds']).dt.date
+train4 = train4.merge(X_reservations, left_on='ds', right_on='visit_date', how='left')[['ds', 'y', 'reserve_visitors']].fillna(0)
 
 
 def model_test(holidays, weekly_seasonality,
@@ -53,17 +52,9 @@ def model_test(holidays, weekly_seasonality,
     future4 = m4.make_future_dataframe(periods=len(test))
     future4['ds'] = pd.to_datetime(future4['ds']).dt.date
     if add_reserve:
-        future4 = future4.merge(
-            X_reservations,
-            left_on='ds',
-            right_on='visit_date',
-            how='left')
-        future4 = future4[['ds', 'reserve_visitors']]
-        future4 = future4.fillna(0)
+        future4 = future4.merge(X_reservations, left_on='ds', right_on='visit_date', how='left')[['ds', 'reserve_visitors']].fillna(0)
         forecast4 = m4.predict(future4)
-        return r2_score(
-            list(test['y']),
-            list(forecast4.loc[450:, 'yhat']))
+        return r2_score(list(test['y']), list(forecast4.loc[450:, 'yhat']))
 
 
 # Setting the grid
